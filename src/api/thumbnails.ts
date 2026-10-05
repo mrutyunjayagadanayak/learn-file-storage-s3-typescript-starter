@@ -24,11 +24,16 @@ export async function handlerUploadThumbnail(cfg: ApiConfig, req: BunRequest) {
   if (!(imageData instanceof File)) {
     throw new BadRequestError("Invalid thumbnail");
   }
+  // Set 10MB as the max thumbnail size
   const MAX_UPLOAD_SIZE = 10_485_760;
   if (imageData.size > MAX_UPLOAD_SIZE) {
     throw new BadRequestError("Thumbnail size too big");
   }
   const mediaType = imageData.type
+
+  if (mediaType !== "image/jpeg" && mediaType !== "image/png") {
+    throw new BadRequestError("Invalid image type");
+  }
 
   const videoMetadata = getVideo(cfg.db, videoId);
   if (!videoMetadata) {
