@@ -5,6 +5,7 @@ import type { ApiConfig } from "../config";
 import type { BunRequest } from "bun";
 import { BadRequestError, NotFoundError, UserForbiddenError } from "./errors";
 import { join } from "path/posix";
+import { randomBytes } from "crypto";
 
 export async function handlerUploadThumbnail(cfg: ApiConfig, req: BunRequest) {
   const { videoId } = req.params as { videoId?: string };
@@ -43,9 +44,10 @@ export async function handlerUploadThumbnail(cfg: ApiConfig, req: BunRequest) {
     throw new UserForbiddenError("Unauthorised user");
   }
   const fileExtension = mediaType.split("/")[1];
-  const filePath = join(cfg.assetsRoot, `${videoId}.${fileExtension}`);
+  const fileName = `${randomBytes(32).toString("base64url")}.${fileExtension}`
+  const filePath = join(cfg.assetsRoot, fileName);
   await Bun.write(filePath, imageData);
-  videoMetadata.thumbnailURL = `http://localhost:${cfg.port}/assets/${videoId}.${fileExtension}`;
+  videoMetadata.thumbnailURL = `http://localhost:${cfg.port}/assets/${fileName}`;
   updateVideo(cfg.db, videoMetadata);
   return respondWithJSON(200, videoMetadata);
 }
